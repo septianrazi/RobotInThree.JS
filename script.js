@@ -5,7 +5,7 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
 
-let perspCam, orthCam, controls, controls2, scene, renderer, view1Elem, view2Elem, canvas, geometries, material, primitiveMeshes;
+let perspCam, orthCam, controls, controls2, scene, renderer, renderer2, view1Elem, view2Elem, geometries, material, primitiveMeshes;
 
 init();
 animate();
@@ -15,33 +15,37 @@ function init() {
   scene.background = new THREE.Color(0x11111111);
   scene.fog = new THREE.Fog(0xcccccc, 1, 15);
 
+  view1Elem = document.querySelector('#view1');
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  renderer.setSize(view1Elem.clientWidth, view1Elem.clientHeight);
+  document.getElementById('view1').appendChild(renderer.domElement);
+  view1Elem.appendChild(renderer.domElement);
 
-  canvas = document.querySelector('#c');
-  view1Elem = document.querySelector('#view1');
   view2Elem = document.querySelector('#view2');
+  renderer2 = new THREE.WebGLRenderer({ antialias: true });
+  renderer2.setPixelRatio(window.devicePixelRatio);
+  renderer2.setSize(view2Elem.clientWidth, view2Elem.clientHeight);
+  document.getElementById('view2').appendChild(renderer2.domElement);
+  view2Elem.appendChild(renderer2.domElement);
 
   perspCam = new THREE.PerspectiveCamera(
     40,
-    window.innerWidth / window.innerHeight,
+    view1Elem.clientWidth / view1Elem.clientHeight,
     1,
     2000
   );
-  perspCam.position.set(80, 160, 300);
+  perspCam.position.set(120, 250, 400);
+  perspCam.lookAt(50, 50, 0);
+
 
   orthCam = new THREE.OrthographicCamera(
-    40,
-    window.innerWidth / window.innerHeight,
+    view2Elem.clientWidth / - 2, view2Elem.clientWidth / 2, view2Elem.clientHeight / 2, view2Elem.clientHeight / - 2,
     1,
     2000
   );
-  // orthCam.position.set(80, 160, 300);
-
-  orthCam.position.set(40, 10, 30);
-  orthCam.lookAt(0, 5, 0);
+  orthCam.position.set(100, 100, 100);
+  orthCam.lookAt(200, 200, 0);
 
   // controls
   controls = new OrbitControls(perspCam, view1Elem);
@@ -407,32 +411,10 @@ function init() {
   var axesHelper = new THREE.AxesHelper(100);
   scene.add(axesHelper);
 
-  window.addEventListener("resize", onWindowResize);
+  // window.addEventListener("resize", onWindowResize);
 
   floor();
 
-}
-
-function setScissorForElement(elem) {
-  const canvasRect = canvas.getBoundingClientRect();
-  const elemRect = elem.getBoundingClientRect();
-
-  // compute a canvas relative rectangle
-  const right = Math.min(elemRect.right, canvasRect.right) - canvasRect.left;
-  const left = Math.max(0, elemRect.left - canvasRect.left);
-  const bottom = Math.min(elemRect.bottom, canvasRect.bottom) - canvasRect.top;
-  const top = Math.max(0, elemRect.top - canvasRect.top);
-
-  const width = Math.min(canvasRect.width, right - left);
-  const height = Math.min(canvasRect.height, bottom - top);
-
-  // setup the scissor to only render to that part of the canvas
-  const positiveYUpBottom = canvasRect.height - bottom;
-  renderer.setScissor(left, positiveYUpBottom, width, height);
-  renderer.setViewport(left, positiveYUpBottom, width, height);
-
-  // return the aspect
-  return width / height;
 }
 
 /**
@@ -449,7 +431,6 @@ function floor() {
     }
   }
 }
-
 
 /**
  * Draws a cross shape at the specified position with a specified opacity.
@@ -492,13 +473,13 @@ function cross(x, z, size, xOffset, zOffset) {
   scene.add(line2);
 }
 
-function onWindowResize() {
-  console.log(window.innerWidth);
-  perspCam.aspect = window.innerWidth / window.innerHeight;
-  perspCam.updateProjectionMatrix();
+// function onWindowResize() {
+//   console.log(window.innerWidth);
+//   perspCam.aspect = window.innerWidth / window.innerHeight;
+//   perspCam.updateProjectionMatrix();
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
+//   renderer.setSize(window.innerWidth, window.innerHeight);
+// }
 
 
 /**
@@ -537,44 +518,17 @@ function animate() {
 
   controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
-  render();
+  renderer.render(scene, perspCam);
+  renderer2.render(scene, orthCam);
+
+  // render();
 }
 
+animate();
+
 function render() {
-  // renderer.render(scene, perspCam);
-  renderer.setScissorTest(true);
+  renderer.render(scene, perspCam);
+  // renderer.setScissorTest(true);
 
-  // render the original view
-  {
-    const aspect = setScissorForElement(view1Elem);
-
-    // adjust the camera for this aspect
-    perspCam.aspect = aspect;
-    perspCam.updateProjectionMatrix();
-    // cameraHelper.update();
-
-    // don't draw the camera helper in the original view
-    // cameraHelper.visible = false;
-
-    scene.background.set(0x000000);
-
-    // render
-    renderer.render(scene, perspCam);
-  }
-
-  // render from the 2nd camera
-  {
-    const aspect = setScissorForElement(view2Elem);
-
-    // adjust the camera for this aspect
-    orthCam.aspect = aspect;
-    orthCam.updateProjectionMatrix();
-
-    // draw the camera helper in the 2nd view
-    // cameraHelper.visible = true;
-
-    scene.background.set(0x000040);
-
-    renderer.render(scene, orthCam);
-  }
+  renderer2.render(scene, orthCam);
 }
