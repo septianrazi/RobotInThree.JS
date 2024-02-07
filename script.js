@@ -19,14 +19,12 @@ function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(view1Elem.clientWidth, view1Elem.clientHeight);
-  document.getElementById('view1').appendChild(renderer.domElement);
   view1Elem.appendChild(renderer.domElement);
 
   view2Elem = document.querySelector('#view2');
   renderer2 = new THREE.WebGLRenderer({ antialias: true });
   renderer2.setPixelRatio(window.devicePixelRatio);
   renderer2.setSize(view2Elem.clientWidth, view2Elem.clientHeight);
-  document.getElementById('view2').appendChild(renderer2.domElement);
   view2Elem.appendChild(renderer2.domElement);
 
   perspCam = new THREE.PerspectiveCamera(
@@ -525,10 +523,3 @@ function animate() {
 }
 
 animate();
-
-function render() {
-  renderer.render(scene, perspCam);
-  // renderer.setScissorTest(true);
-
-  renderer2.render(scene, orthCam);
-}
