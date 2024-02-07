@@ -1,0 +1,303 @@
+<!-- Licensed under a BSD license. See license.html for license -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Three.js - Custom BufferGeometry</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    #c {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="c"></canvas>
+</body>
+
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+<script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+      }
+    }
+  </script>
+
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+
+  function makeInstance(scene, texture, geometry, color, x) {
+    const material = new THREE.MeshBasicMaterial({ color, map: texture });
+
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+
+    cube.position.x = x;
+    return cube;
+  }
+
+
+  function main() {
+    const canvas = document.querySelector('#c');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+
+    const fov = 75;
+    const aspect = 2;  // the canvas default
+    const near = 0.1;
+    const far = 100;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.z = 5;
+
+    var controls = new OrbitControls(camera, renderer.domElement);
+    controls.listenToKeyEvents(window); // optional
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+
+    {
+      const color = 0xFFFFFF;
+      const intensity = 1;
+      const light = new THREE.DirectionalLight(color, intensity);
+      light.position.set(-1, 2, 4);
+      scene.add(light);
+    }
+
+    // NOT A GOOD EXAMPLE OF HOW TO MAKE A CUBE!
+    // Only trying to make it clear most vertices are unique
+    const vertices = [
+      // front
+      { pos: [-1, -1, 1], norm: [0, 0, 1], uv: [0, 0], }, // 0
+      { pos: [1, -1, 1], norm: [0, 0, 1], uv: [1, 0], }, // 1
+      { pos: [-1, 1, 1], norm: [0, 0, 1], uv: [0, 1], }, // 2
+      { pos: [1, 1, 1], norm: [0, 0, 1], uv: [1, 1], }, // 3
+
+      // right
+      { pos: [1, -1, 1], norm: [1, 0, 0], uv: [0, 0], }, // 4
+      { pos: [1, -1, -1], norm: [1, 0, 0], uv: [1, 0], }, // 5
+      { pos: [1, 1, 1], norm: [1, 0, 0], uv: [0, 1], }, // 6
+      { pos: [1, 1, -1], norm: [1, 0, 0], uv: [1, 1], }, // 7
+
+      // back
+      { pos: [1, -1, -1], norm: [0, 0, -1], uv: [0, 0], }, // 8
+      { pos: [-1, -1, -1], norm: [0, 0, -1], uv: [1, 0], }, // 9
+      { pos: [1, 1, -1], norm: [0, 0, -1], uv: [0, 1], }, // 10
+      { pos: [-1, 1, -1], norm: [0, 0, -1], uv: [1, 1], }, // 11
+
+
+      // left
+      { pos: [-1, -1, -1], norm: [-1, 0, 0], uv: [0, 0], }, // 12
+      { pos: [-1, -1, 1], norm: [-1, 0, 0], uv: [1, 0], }, // 13
+      { pos: [-1, 1, -1], norm: [-1, 0, 0], uv: [0, 1], }, // 14
+      { pos: [-1, 1, 1], norm: [-1, 0, 0], uv: [1, 1], }, // 15
+
+
+      // top
+      { pos: [1, 1, -1], norm: [0, 1, 0], uv: [0, 0], }, // 16
+      { pos: [-1, 1, -1], norm: [0, 1, 0], uv: [1, 0], }, // 17
+      { pos: [1, 1, 1], norm: [0, 1, 0], uv: [0, 1], }, // 18
+      { pos: [-1, 1, 1], norm: [0, 1, 0], uv: [1, 1], }, // 19
+      // bottom
+      { pos: [1, -1, 1], norm: [0, -1, 0], uv: [0, 0], }, // 20
+      { pos: [-1, -1, 1], norm: [0, -1, 0], uv: [1, 0], }, // 21
+      { pos: [1, -1, -1], norm: [0, -1, 0], uv: [0, 1], }, // 22
+      { pos: [-1, -1, -1], norm: [0, -1, 0], uv: [1, 1], }, // 23
+
+      // front hole
+      { pos: [-0.5, -0.5, 1], norm: [0, 0, 1], uv: [0.25, 0.25], }, // 24
+      { pos: [0.5, -0.5, 1], norm: [0, 0, 1], uv: [0.75, 0.25], }, // 25
+      { pos: [-0.5, 0.5, 1], norm: [0, 0, 1], uv: [0.25, 0.75], }, // 26
+      { pos: [0.5, 0.5, 1], norm: [0, 0, 1], uv: [0.75, 0.75], }, // 27
+
+      //front extra
+      { pos: [-1, -0.5, 1], norm: [0, 0, 1], uv: [0, 0.25], }, // 28
+      { pos: [-1, 0.5, 1], norm: [0, 0, 1], uv: [0, 0.75], }, // 29
+      { pos: [1, -0.5, 1], norm: [0, 0, 1], uv: [1, 0.25], }, // 30
+      { pos: [1, 0.5, 1], norm: [0, 0, 1], uv: [1, 0.75], }, // 31
+
+      // right hole
+      { pos: [1, -0.5, 0.5], norm: [1, 0, 0], uv: [0.25, 0.25], }, // 32
+      { pos: [1, -0.5, -0.5], norm: [1, 0, 0], uv: [0.75, 0.25], }, // 33
+      { pos: [1, 0.5, 0.5], norm: [1, 0, 0], uv: [0.25, 0.75], }, // 34
+      { pos: [1, 0.5, -0.5], norm: [1, 0, 0], uv: [0.75, 0.75], }, // 35
+
+      // right extra
+      { pos: [1, -0.5, 1], norm: [1, 0, 0], uv: [0, 0.25], }, // 36
+      { pos: [1, -0.5, -1], norm: [1, 0, 0], uv: [1, 0.25], }, // 37
+      { pos: [1, 0.5, 1], norm: [1, 0, 0], uv: [0, 0.75], }, // 38
+      { pos: [1, 0.5, -1], norm: [1, 0, 0], uv: [1, 0.75], }, // 39
+
+      // back hole
+      { pos: [0.5, -0.5, -1], norm: [0, 0, -1], uv: [0.25, 0.25], }, // 40
+      { pos: [-0.5, -0.5, -1], norm: [0, 0, -1], uv: [0.75, 0.25], }, // 41
+      { pos: [0.5, 0.5, -1], norm: [0, 0, -1], uv: [0.25, 0.75], }, // 42
+      { pos: [-0.5, 0.5, -1], norm: [0, 0, -1], uv: [0.75, 0.75], }, // 43
+
+      // back extra
+      { pos: [1, -0.5, -1], norm: [0, 0, -1], uv: [0, 0.25], }, // 44
+      { pos: [-1, -0.5, -1], norm: [0, 0, -1], uv: [1, 0.25], }, // 45
+      { pos: [1, 0.5, -1], norm: [0, 0, -1], uv: [0, 0.75], }, // 46
+      { pos: [-1, 0.5, -1], norm: [0, 0, -1], uv: [1, 0.75], }, // 47
+
+      // left hole
+      { pos: [-1, -0.5, -0.5], norm: [-1, 0, 0], uv: [0.25, 0.25], }, // 48
+      { pos: [-1, -0.5, 0.5], norm: [-1, 0, 0], uv: [0.75, 0.25], }, // 49
+      { pos: [-1, 0.5, -0.5], norm: [-1, 0, 0], uv: [0.25, 0.75], }, // 50
+      { pos: [-1, 0.5, 0.5], norm: [-1, 0, 0], uv: [0.75, 0.75], }, // 51
+
+      // left extra
+      { pos: [-1, -0.5, -1], norm: [-1, 0, 0], uv: [0, 0.25], }, // 52
+      { pos: [-1, -0.5, 1], norm: [-1, 0, 0], uv: [1, 0.25], }, // 53
+      { pos: [-1, 0.5, -1], norm: [-1, 0, 0], uv: [0, 0.75], }, // 54
+      { pos: [-1, 0.5, 1], norm: [-1, 0, 0], uv: [1, 0.75], }, // 55
+
+
+      // top hole
+      { pos: [0.5, 1, -0.5], norm: [0, 1, 0], uv: [0.25, 0.25], }, // 56
+      { pos: [-0.5, 1, -0.5], norm: [0, 1, 0], uv: [0.75, 0.25], }, // 57
+      { pos: [0.5, 1, 0.5], norm: [0, 1, 0], uv: [0.25, 0.75], }, // 58
+      { pos: [-0.5, 1, 0.5], norm: [0, 1, 0], uv: [0.75, 0.75], }, // 59
+
+      //top extra
+      { pos: [1, 1, -0.5], norm: [0, 1, 0], uv: [0, 0.25], }, // 60
+      { pos: [-1, 1, -0.5], norm: [0, 1, 0], uv: [1, 0.25], }, // 61
+      { pos: [1, 1, 0.5], norm: [0, 1, 0], uv: [0, 0.75], }, // 62
+      { pos: [-1, 1, 0.5], norm: [0, 1, 0], uv: [1, 0.75], }, // 63
+
+      // bottom hole
+      { pos: [0.5, -1, 0.5], norm: [0, -1, 0], uv: [0.25, 0.25], }, // 64
+      { pos: [-0.5, -1, 0.5], norm: [0, -1, 0], uv: [0.75, 0.25], }, // 65
+      { pos: [0.5, -1, -0.5], norm: [0, -1, 0], uv: [0.25, 0.75], }, // 66
+      { pos: [-0.5, -1, -0.5], norm: [0, -1, 0], uv: [0.75, 0.75], }, // 67
+
+      //bottom extra
+      { pos: [1, -1, 0.5], norm: [0, -1, 0], uv: [0, 0.25], }, // 68
+      { pos: [-1, -1, 0.5], norm: [0, -1, 0], uv: [1, 0.25], }, // 69
+      { pos: [1, -1, -0.5], norm: [0, -1, 0], uv: [0, 0.75], }, // 70
+      { pos: [-1, -1, -0.5], norm: [0, -1, 0], uv: [1, 0.75], }, // 71
+    ];
+    const numVertices = vertices.length;
+    const positionNumComponents = 3;
+    const normalNumComponents = 3;
+    const uvNumComponents = 2;
+    const positions = new Float32Array(numVertices * positionNumComponents);
+    const normals = new Float32Array(numVertices * normalNumComponents);
+    const uvs = new Float32Array(numVertices * uvNumComponents);
+    let posNdx = 0;
+    let nrmNdx = 0;
+    let uvNdx = 0;
+    for (const vertex of vertices) {
+      positions.set(vertex.pos, posNdx);
+      normals.set(vertex.norm, nrmNdx);
+      uvs.set(vertex.uv, uvNdx);
+      posNdx += positionNumComponents;
+      nrmNdx += normalNumComponents;
+      uvNdx += uvNumComponents;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(positions, positionNumComponents));
+    geometry.setAttribute(
+      'normal',
+      new THREE.BufferAttribute(normals, normalNumComponents));
+    geometry.setAttribute(
+      'uv',
+      new THREE.BufferAttribute(uvs, uvNumComponents));
+
+    geometry.setIndex([
+      // front
+      0, 1, 28, 28, 1, 30, // front bottom
+      28, 24, 29, 29, 24, 26, // front left
+      25, 30, 27, 30, 31, 27, // front right
+      29, 31, 2, 31, 3, 2, // front top
+
+      // right
+      4, 5, 37, 4, 37, 36,
+      38, 39, 7, 38, 7, 6,
+      36, 32, 34, 36, 34, 38,
+      33, 37, 39, 33, 39, 35,
+
+      // back
+      8, 9, 45, 44, 8, 45,
+      46, 47, 11, 46, 11, 10,
+      44, 40, 42, 44, 42, 46,
+      41, 45, 47, 41, 47, 43,
+
+      // left
+      12, 13, 52, 52, 13, 53,
+      54, 55, 14, 14, 55, 15,
+      49, 53, 51, 51, 53, 55,
+      52, 48, 54, 54, 48, 50,
+
+      //top
+      16, 17, 61, 61, 60, 16,
+      62, 63, 19, 19, 18, 62,
+      57, 61, 63, 63, 59, 57,
+      60, 56, 58, 58, 62, 60,
+
+
+      // bottom
+      20, 21, 69, 69, 68, 20,
+      70, 71, 23, 23, 22, 70,
+      65, 69, 71, 71, 67, 65,
+      68, 64, 66, 66, 70, 68,
+    ]);
+
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('grenouille.jpg');
+
+    const cubes = [
+      makeInstance(scene, texture, geometry, 0x00FF00, 0),
+      makeInstance(scene, texture, geometry, 0xFF0000, -3),
+      makeInstance(scene, texture, geometry, 0x0000FF, 3),
+    ];
+
+
+    function resizeRendererToDisplaySize(renderer) {
+      const canvas = renderer.domElement;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const needResize = canvas.width !== width || canvas.height !== height;
+      if (needResize) {
+        renderer.setSize(width, height, false);
+      }
+      return needResize;
+    }
+
+    function render(time) {
+      //   time *= 0.0004;
+
+      if (resizeRendererToDisplaySize(renderer)) {
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+      }
+
+      controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+      renderer.render(scene, camera);
+      requestAnimationFrame(render);
+    }
+
+
+    requestAnimationFrame(render);
+  }
+
+  main();
+</script>
+
+</html>
