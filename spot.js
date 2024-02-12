@@ -10,8 +10,9 @@ class Arm {
   constructor() {
     this.baseJoint = new THREE.Object3D();
     this.lowerArm = new THREE.Object3D();
-    this.upperArm = new THREE.Object3D();
-    this.wristJoint = new THREE.Object3D();
+    this.elbow = new THREE.Object3D();
+    this.forearmTwist = new THREE.Object3D();
+    this.wristTwistJoint = new THREE.Object3D();
     this.claw = new THREE.Object3D();
 
     this.createArm();
@@ -19,17 +20,38 @@ class Arm {
 
   // Arm class methods here
   createArm() {
-    this.createLowerArm();
-    this.createUpperArm();
-  }
 
+  }
+  createWristTwist() {
+
+  }
+  createForearmTwist() {
+  }
+  createElbow() {
+
+  }
+  createClaw() {
+
+  }
   createLowerArm() {
 
   }
 
-  createUpperArm() {
+  createBaseJoint() {
 
   }
+
+
+
+
+
+
+
+
+
+
+
+  create
 }
 
 class Legs {
@@ -418,20 +440,166 @@ function main() {
 
 
   let spot = new Spot();
-  spot.mesh.position.y = -15
-  scene.add(spot.mesh);
+  spot.mesh.position.y = -20
+  // scene.add(spot.mesh);
+
+  let claw;
+  {
+    claw = new THREE.Object3D();
+    let clawHeight = 9;
+    let clawGeo = new THREE.BoxGeometry(4, clawHeight, 3);
+    let clawMesh = new THREE.Mesh(clawGeo, matteBlackMat);
+    clawMesh.position.y = clawHeight / 2;
+    clawMesh.position.z = -1;
+    clawMesh.rotateX(MathUtils.degToRad(-15));
+    claw.add(clawMesh);
+
+    // scene.add(claw)
+
+
+  }
+
+  let wrist;
+  {
+    wrist = new THREE.Object3D();
+    let wristHeight = 5;
+    let wristGeo = new THREE.CylinderGeometry(2.5, 2, wristHeight + 2);
+    let wristMesh = new THREE.Mesh(wristGeo, matteBlackMat);
+    wristMesh.position.y = wristHeight / 2;
+
+    let bottomClawBaseGeo = new THREE.BoxGeometry(4, 3, 5);
+    let bottomClawBaseMesh = new THREE.Mesh(bottomClawBaseGeo, matteBlackMat);
+    bottomClawBaseMesh.position.y = wristHeight + 2;
+
+
+    let bottomClawGeo = new THREE.BoxGeometry(4, 9, 3);
+    let bottomClawMesh = new THREE.Mesh(bottomClawGeo, matteBlackMat);
+    bottomClawMesh.position.y = wristHeight - 2
+    bottomClawMesh.position.z = -4
+
+    bottomClawBaseMesh.add(bottomClawMesh)
+    bottomClawBaseMesh.position.y = wristHeight + 2;
 
 
 
-  // let jointGeo = new THREE.CylinderGeometry(8, 8, 7, 6, 6);
-  // let jointMesh = new THREE.Mesh(jointGeo, matteBlackMat);
-  // scene.add(jointMesh)
+    wrist.add(bottomClawBaseMesh);
+    wrist.add(wristMesh);
 
-  // { // lower arm stuff
-  //   let lowerArm = new THREE.Object3D();
-  //   let jointGeo = new THREE.CylinderGeometry(8, 8, 7, 6, 6);
-  //   let jointMesh = new THREE.Mesh(jointGeo, matteBlackMat);
-  // }
+    wrist.add(claw)
+    claw.position.y = wristHeight + 2;
+    claw.position.z = 1;
+
+    claw.rotateX(MathUtils.degToRad(0));
+
+    // scene.add(wristMesh)
+  }
+
+  let forearm;
+  {
+    forearm = new THREE.Object3D();
+    let forearmLength = 30;
+    let forearmGeo = new THREE.CylinderGeometry(2, 3, forearmLength);
+    let forearmMesh = new THREE.Mesh(forearmGeo, matteBlackMat);
+    forearmMesh.position.y = forearmLength / 2;
+    forearm.add(forearmMesh);
+
+    forearm.add(wrist);
+    wrist.position.y = forearmLength;
+    // wrist.rotateX(MathUtils.degToRad(90))
+  }
+
+  let elbow = new THREE.Group();
+  { //create elbow
+    let elbowHeight = 20;
+    let elbowLower = new THREE.Object3D();
+    let lowerElbowGeo = new THREE.BoxGeometry(10, elbowHeight, 6);
+    let lowerElbowMesh = new THREE.Mesh(lowerElbowGeo, matteBlackMat);
+    lowerElbowMesh.position.y = (elbowHeight / 2) - elbowHeight / 7;
+
+    elbowLower.add(lowerElbowMesh);
+
+    elbowLower.rotateX(MathUtils.degToRad(-120));
+
+
+    let elbowUpper = new THREE.Object3D();
+    let upperElbowGeo = new THREE.BoxGeometry(10, elbowHeight / 2, 6);
+    let upperElbowMesh = new THREE.Mesh(upperElbowGeo, matteBlackMat);
+    upperElbowMesh.position.y = -(elbowHeight / 2) - elbowHeight / 15
+    upperElbowMesh.position.z = -(elbowHeight / 2) - elbowHeight / 6;
+
+    elbowUpper.add(upperElbowMesh)
+
+    elbow.add(elbowLower)
+    elbow.add(elbowUpper)
+
+
+    elbow.add(forearm)
+    forearm.position.z = -(elbowHeight / 2) - elbowHeight / 6;
+    forearm.position.y = -(elbowHeight / 2) - elbowHeight / 4
+    forearm.rotateX(MathUtils.degToRad(180));
+    // forearm.rotateY(MathUtils.degToRad(180));
+
+    // forearm.position.z = -(elbowHeight / 2) - elbowHeight / 6;
+
+  }
+
+  let lowerArm;
+  { // lower arm stuff
+    lowerArm = new THREE.Object3D();
+
+    let jointGeo = new THREE.CylinderGeometry(5, 3, 5);
+    jointGeo.rotateZ(MathUtils.degToRad(90));
+    let leftJointMesh = new THREE.Mesh(jointGeo, matteBlackMat);
+    leftJointMesh.rotateY(MathUtils.degToRad(180));
+    leftJointMesh.position.x = -7;
+    let rightJointMesh = new THREE.Mesh(jointGeo, matteBlackMat);
+    rightJointMesh.position.x = 7;
+
+    let middleJointGeo = new THREE.CylinderGeometry(5, 5, 9);
+    let middleJointMesh = new THREE.Mesh(middleJointGeo, matteBlackMat);
+    middleJointMesh.rotateZ(MathUtils.degToRad(90));
+
+    lowerArm.add(middleJointMesh);
+
+    lowerArm.add(leftJointMesh);
+    lowerArm.add(rightJointMesh);
+
+    let lowerArmLength = 40;
+
+
+
+    let lowerArmGeo = new THREE.BoxGeometry(6, lowerArmLength, 6);
+    let lowerArmMesh = new THREE.Mesh(lowerArmGeo, matteBlackMat);
+
+    let lowerArmGeoDetail = new THREE.BoxGeometry(8, lowerArmLength / 2, 8);
+    let lowerArmDetailMesh = new THREE.Mesh(lowerArmGeoDetail, matteBlackMat);
+    lowerArmMesh.add(lowerArmDetailMesh);
+
+    lowerArmMesh.position.y = (lowerArmLength / 2);
+    lowerArm.add(lowerArmMesh);
+
+
+    elbow.position.y = lowerArmLength;
+    // elbow.rotateX(MathUtils.degToRad(90));
+    lowerArm.add(elbow)
+    lowerArm.rotateX(MathUtils.degToRad(90));
+  }
+
+
+  let jointHeight = 7;
+  let jointGeo = new THREE.CylinderGeometry(8, 8, jointHeight);
+  let jointMesh = new THREE.Mesh(jointGeo, matteBlackMat);
+  jointMesh.add(lowerArm)
+  lowerArm.position.y = jointHeight;
+
+  jointMesh.rotateY(MathUtils.degToRad(45))
+  lowerArm.rotateX(MathUtils.degToRad(-30))
+  elbow.rotateX(MathUtils.degToRad(30))
+  forearm.rotateY(MathUtils.degToRad(180))
+  wrist.rotateX(MathUtils.degToRad(90))
+  claw.rotateX(MathUtils.degToRad(50))
+
+  scene.add(jointMesh)
 
 
 
