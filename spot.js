@@ -5,7 +5,6 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { MathUtils } from 'three';
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
 
-
 let material, matteBlackMat, matteYellowMat;
 
 class Arm {
@@ -239,7 +238,7 @@ class Legs {
 
     this.extendAllLegs(-75);
     this.extendAllKnees(-110);
-    this.abductAllLegs(30);
+    // this.abductAllLegs(30);
 
 
   }
@@ -723,6 +722,8 @@ function main() {
 
   let spot = new Spot();
   // spot.mesh.position.y = -20
+
+
   scene.add(spot.mesh);
 
   // animate()
@@ -762,6 +763,10 @@ function main() {
     renderer.render(scene, camera);
     renderer.setAnimationLoop(render);
     // requestAnimationFrame(render);
+
+    // spot.arm.baseJoint.rotation.s(new THREE.Vector3(10, 0, 0));
+    spot.mesh.position.lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 0), 0.1);
+
   }
 
 
