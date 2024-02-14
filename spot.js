@@ -204,6 +204,8 @@ class Legs {
     this.leftBackLeg = new Leg();
 
     this.init()
+
+    this.abductPrevValue = NaN;
   }
 
   init() {
@@ -243,6 +245,8 @@ class Legs {
 
   }
 
+  // movement methods
+
   extendAllKnees(deg) {
     this.rightFrontLeg.extendKnee(deg);
     this.leftFrontLeg.extendKnee(deg);
@@ -258,11 +262,74 @@ class Legs {
   }
 
   abductAllLegs(deg) {
+    if (this.abductPrevValue === deg) return;
     this.rightFrontLeg.abductLeg(deg);
     this.leftFrontLeg.abductLeg(deg);
     this.rightBackLeg.abductLeg(deg);
     this.leftBackLeg.abductLeg(deg);
+    this.abductPrevValue = deg;
   }
+
+  extendAllRightKnees(deg) {
+    this.rightFrontLeg.extendKnee(deg);
+    this.rightBackLeg.extendKnee(deg);
+  }
+
+  extendAllRightLegs(deg) {
+    this.rightFrontLeg.extendLeg(-deg);
+    this.rightBackLeg.extendLeg(-deg);
+  }
+
+  extendAllLeftKnees(deg) {
+    this.leftFrontLeg.extendKnee(deg);
+    this.leftBackLeg.extendKnee(deg);
+  }
+
+  extendAllLeftLegs(deg) {
+    this.leftFrontLeg.extendLeg(deg);
+    this.leftBackLeg.extendLeg(deg);
+  }
+
+  extendAllFrontKnees(deg) {
+    this.rightFrontLeg.extendKnee(deg);
+    this.leftFrontLeg.extendKnee(deg);
+  }
+
+  extendAllFrontLegs(deg) {
+    this.rightFrontLeg.extendLeg(-deg);
+    this.leftFrontLeg.extendLeg(deg);
+  }
+
+  extendAllBackKnees(deg) {
+    this.rightBackLeg.extendKnee(deg);
+    this.leftBackLeg.extendKnee(deg);
+  }
+
+  extendAllBackLegs(deg) {
+    this.rightBackLeg.extendLeg(-deg);
+    this.leftBackLeg.extendLeg(deg);
+  }
+
+  extendLeftStepKnees(deg) {
+    this.leftFrontLeg.extendKnee(deg);
+    this.rightBackLeg.extendKnee(deg);
+  }
+
+  extendLeftStepLegs(deg) {
+    this.leftFrontLeg.extendLeg(deg);
+    this.rightBackLeg.extendLeg(-deg);
+  }
+
+  extendRightStepKnees(deg) {
+    this.rightFrontLeg.extendKnee(deg);
+    this.leftBackLeg.extendKnee(deg);
+  }
+
+  extendRightStepLegs(deg) {
+    this.rightFrontLeg.extendLeg(-deg);
+    this.leftBackLeg.extendLeg(deg);
+  }
+
 }
 
 class Leg {
@@ -431,7 +498,7 @@ class Spot {
       torsoShape.bezierCurveTo(3.5, 0, 3.5, 14.25, 0, 19.25);
 
       const torsoGeo = new THREE.ExtrudeGeometry(torsoShape, { depth: 16, bevelEnabled: true, bevelThickness: 3, bevelSegments: 10 });
-      let torsoMesh = new THREE.Mesh(torsoGeo, matteBlackMat);
+      let torsoMesh = new THREE.Mesh(torsoGeo, matteYellowMat);
       torsoMesh.rotation.x = Math.PI * 0.5;
       torsoMesh.position.x = -19 / 2;
       torsoMesh.position.z = -8
@@ -546,10 +613,6 @@ class Spot {
 }
 
 
-function init() {
-
-}
-
 function main() {
   const canvas = document.querySelector('#c');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -561,8 +624,8 @@ function main() {
   const near = 0.1;
   const far = 3000;
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera.position.set(220, 0, 50);
-  camera.lookAt(0, 0, 50);
+  camera.position.set(1000, 0, 50);
+  camera.lookAt(0, 0, 0);
 
   var controls = new FlyControls(camera, renderer.domElement);
   controls.dragToLook = true;
@@ -590,7 +653,9 @@ function main() {
     'extendClaw': 30,
   }
 
-  const folderArm = gui.addFolder('Arm');
+  const jointControls = gui.addFolder('Joint Controls');
+
+  const folderArm = jointControls.addFolder('Arm');
   for (const key in armKeyFrames) {
     if (armKeyFrames.hasOwnProperty(key)) {
       folderArm.add(armKeyFrames, key, 0, 360).onChange(value => {
@@ -599,7 +664,7 @@ function main() {
     }
   }
 
-  const folderLegs = gui.addFolder('Legs');
+  const folderLegs = jointControls.addFolder('Legs');
 
 
   let leftBackLegKeyFrames = {
@@ -663,7 +728,7 @@ function main() {
     'extendAllLegs': 30,
     'abductAllLegs': 30,
   }
-  const folderLegsAll = gui.addFolder('Legs (Grouped)');
+  const folderLegsAll = jointControls.addFolder('Legs (Grouped)');
   for (const key in allLegsKeyFrames) {
     if (allLegsKeyFrames.hasOwnProperty(key)) {
       folderLegsAll.add(allLegsKeyFrames, key, 0, 360).onChange(value => {
@@ -671,6 +736,8 @@ function main() {
       });
     }
   }
+  jointControls.close()
+  gui.close()
 
   // gui.add(rotationKeyframe, 'extendLowerArm', 0, 100, 10); // min, max, step
 
@@ -719,23 +786,8 @@ function main() {
     scene.add(light2);
   }
 
-
   let spot = new Spot();
-  // spot.mesh.position.y = -20
-
-
   scene.add(spot.mesh);
-
-  // animate()
-  // function animate(rotationKeyframe) {
-  //   spot.arm.rotateBase(45);
-  //   spot.arm.extendLowerArm(-45);
-  //   spot.arm.extendElbow(45)
-  //   spot.arm.rotateForearmTwist(180);
-  //   spot.arm.rotateWristTwist(180);
-  //   spot.arm.extendWristTwist(45);
-  //   spot.arm.extendClaw(60);
-  // }
 
   function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
@@ -765,10 +817,126 @@ function main() {
     // requestAnimationFrame(render);
 
     // spot.arm.baseJoint.rotation.s(new THREE.Vector3(10, 0, 0));
-    spot.mesh.position.lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 0), 0.1);
+    // spot.mesh.position.lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 0), 0.1);
 
   }
 
+  let animationParams = {
+    "walkAnimationFlag": true,
+    "runAnimationFlag": false,
+    "armAnimationFlag": false,
+    "flyAwayAnimationFlag": false,
+    "followSpot": true,
+    "animateWithMovement": true,
+  }
+
+  const folderAnimation = gui.addFolder('Animations', 0);
+  for (const key in animationParams) {
+    if (animationParams.hasOwnProperty(key)) {
+      folderAnimation.add(animationParams, key).onChange(value => {
+        spot.mesh.position.set(0, 0, 0)
+      });
+    }
+  }
+  // Assuming `mesh` is your THREE.Mesh object
+  let frame = 0;
+  function animate() {
+
+    frame++;
+    requestAnimationFrame(animate);
+
+    if (animationParams.walkAnimationFlag)
+      animateWalk(frame)
+    if (animationParams.runAnimationFlag)
+      animateRun(frame)
+    if (animationParams.armAnimationFlag)
+      animateArm(frame)
+    if (animationParams.flyAwayAnimationFlag)
+      flyAway(frame)
+
+    renderer.render(scene, camera);
+    console.log(animationParams.walkAnimationFlag)
+  }
+  animate();
+
+
+  function animateWalk(frame) {
+
+    if (animationParams.animateWithMovement) {
+      spot.mesh.position.z -= 0.3;
+      if (spot.mesh.position.z < -1000) {
+        spot.mesh.position.z = 1000;
+      }
+      spot.mesh.position.y = Math.cos(frame / 15) * 2
+    }
+
+
+    if (animationParams.followSpot)
+      camera.lookAt(spot.mesh.position)
+
+    spot.legs.extendLeftStepKnees(300 + Math.sin(frame / 30) * 30);
+    spot.legs.extendLeftStepLegs(300 + Math.cos(frame / 30) * 10);
+
+    spot.legs.extendRightStepKnees(300 + Math.cos(frame / 30) * 30);
+    spot.legs.extendRightStepLegs(300 + Math.sin(frame / 30) * 10);
+  }
+
+  function animateRun(frame) {
+
+    if (animationParams.animateWithMovement) {
+      spot.mesh.position.z -= 3;
+      if (spot.mesh.position.z < -1000) {
+        spot.mesh.position.z = 1000;
+      }
+      spot.mesh.position.y = Math.cos(frame / 20) * 15
+    }
+
+    if (animationParams.followSpot)
+      camera.lookAt(spot.mesh.position)
+
+    spot.legs.extendAllBackKnees(300 + Math.sin(frame / 20) * 50);
+    spot.legs.extendAllBackLegs(300 + Math.cos(frame / 20) * 20);
+
+    spot.legs.extendAllFrontKnees(-325 + Math.cos(frame / 20) * 50);
+    spot.legs.extendAllFrontLegs(-325 + Math.sin(frame / 20) * 20);
+  }
+
+
+
+  function animateArm(frame) {
+    spot.arm.baseJoint.rotation.y = 6 + Math.sin(frame / 200);
+    spot.arm.lowerArm.rotation.x = -150 + Math.sin(frame / 200) * 0.5;
+    spot.arm.elbow.rotation.x = -150 + Math.sin(frame / 100) * 0.5;
+    spot.arm.forearmTwistJoint.rotation.y = Math.sin(frame / 100);
+    spot.arm.wristTwistJoint.rotation.y = Math.sin(frame / 50);
+    spot.arm.wristTwistJoint.rotation.x = Math.sin(frame / 100);
+    spot.arm.claw.rotation.x = -150 - Math.sin(frame / 30);
+  }
+
+  // spot.legs.extendAllLegs(0);
+
+  function flyAway(frame) {
+
+    if (animationParams.animateWithMovement) {
+      spot.mesh.position.z -= 1;
+      spot.mesh.position.y += 0.5 + Math.cos(frame / 20) + Math.sin(frame / 100);
+    }
+    if (spot.mesh.position.z < -1000) {
+      spot.mesh.position.z = 1000;
+      spot.mesh.position.y = -1000;
+    }
+
+
+    if (animationParams.followSpot)
+      camera.lookAt(spot.mesh.position)
+
+
+    spot.legs.abductAllLegs(45);
+    spot.legs.extendAllKnees(210 + Math.cos(frame / 50));
+
+    spot.arm.rotateBase(frame * 100);
+    spot.arm.elbow.rotation.x = (90)
+  }
 
   renderer.setAnimationLoop(render);
   // requestAnimationFrame(render);
