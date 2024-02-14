@@ -42,14 +42,20 @@ function init() {
     1,
     2000
   );
-  orthCam.position.set(100, 100, 100);
+  orthCam.position.set(1000, 1000, 100);
   orthCam.lookAt(200, 200, 0);
 
   // controls
+  // controls = new FlyControls(perspCam, renderer.domElement);
+  // controls.dragToLook = true;
+
+  controls2 = new FlyControls(orthCam, renderer.domElement);
+  controls2.dragToLook = true;
+
   controls = new OrbitControls(perspCam, view1Elem);
-  controls2 = new OrbitControls(orthCam, view2Elem);
-  controls.listenToKeyEvents(window); // optional
-  controls2.update();
+  // controls2 = new OrbitControls(orthCam, view2Elem);
+  // controls.listenToKeyEvents(window); // optional
+  // controls2.update();
 
   controls.enableDamping = false; // an animation loop is required when either damping or auto-rotation are enabled
   controls.dampingFactor = 0.05;
@@ -514,7 +520,8 @@ function addMeshesToScene(geometries, z) {
 function animate() {
   requestAnimationFrame(animate);
 
-  controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+  controls.update(0.5); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+  controls2.update(0.5); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
   renderer.render(scene, perspCam);
   renderer2.render(scene, orthCam);
