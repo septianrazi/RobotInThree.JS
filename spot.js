@@ -765,7 +765,7 @@ function main() {
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
   // camera.position.set(1000, 0, 50);
   camera.position.set(10, 1.6, -10);
-  camera.lookAt(0, 1, 0);
+  camera.lookAt(2, 1.4, 2);
 
   var controls = new FlyControls(camera, renderer.domElement);
   controls.dragToLook = true;
@@ -805,7 +805,7 @@ function main() {
 
   // Spawn Spot
   let spot = new Spot();
-  let spotInitPos = new THREE.Vector3(0, 1.4, 0);
+  let spotInitPos = new THREE.Vector3(2, 1.4, 2);
   spot.mesh.position.set(spotInitPos.x, spotInitPos.y, spotInitPos.z);
   spot.mesh.scale.set(0.02, 0.02, 0.02);
   scene.add(spot.mesh);
