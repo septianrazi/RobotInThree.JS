@@ -805,9 +805,9 @@ function main() {
 
   // Spawn Spot
   let spot = new Spot();
-  let spotInitPos = new THREE.Vector3(2, 1.4, 2);
+  let spotInitPos = new THREE.Vector3(1, 0.65, 1);
   spot.mesh.position.set(spotInitPos.x, spotInitPos.y, spotInitPos.z);
-  spot.mesh.scale.set(0.02, 0.02, 0.02);
+  spot.mesh.scale.set(0.01, 0.01, 0.01);
   scene.add(spot.mesh);
 
 
@@ -815,11 +815,11 @@ function main() {
   // ANIMATION 
   // ---------
   let animationParams = {
-    "walkAnimationFlag": false,
+    "walkAnimationFlag": true,
     "runAnimationFlag": false,
-    "armAnimationFlag": false,
+    "armAnimationFlag": true,
     "flyAwayAnimationFlag": false,
-    "followSpot": true,
+    "followSpot": false,
     "animateWithMovement": true,
   }
 
@@ -853,8 +853,8 @@ function main() {
 
       if (animationParams.animateWithMovement) {
         spot.mesh.position.z -= 0.02;
-        if (spot.mesh.position.z < -100) {
-          spot.mesh.position.z = 100;
+        if (spot.mesh.position.z < -50) {
+          spot.mesh.position.z = 50;
         }
         spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 15) / 20
       }
@@ -873,8 +873,8 @@ function main() {
 
       if (animationParams.animateWithMovement) {
         spot.mesh.position.z -= 0.1;
-        if (spot.mesh.position.z < -100) {
-          spot.mesh.position.z = 100;
+        if (spot.mesh.position.z < -50) {
+          spot.mesh.position.z = 50;
         }
         spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 20) * 2 / 20
       }
@@ -905,8 +905,8 @@ function main() {
         spot.mesh.position.z -= 0.1;
         spot.mesh.position.y += (0.5 + Math.cos(frame / 20) + Math.sin(frame / 100)) / 20;
       }
-      if (spot.mesh.position.z < -100) {
-        spot.mesh.position.z = 100;
+      if (spot.mesh.position.z < -50) {
+        spot.mesh.position.z = 50;
         spot.mesh.position.y = 5;
       }
 
