@@ -5,8 +5,187 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { MathUtils } from 'three';
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
 
-let material, matteBlackMat, matteYellowMat;
+// global params
+let debugMaterial, matteBlackMat, matteYellowMat;
+let gui;
+let textureLoader;
 
+// -------------------------------------
+// Classes for Spot and movement methods
+// -------------------------------------
+
+// Parent class for spot
+class Spot {
+  constructor() {
+
+    if (Spot.instance) {
+      return Spot.instance;
+    }
+    Spot.instance = this;
+
+    this.legs = new Legs();
+    this.arm = new Arm();
+
+    this.mesh = this.createSpot();
+  }
+
+
+  // Spot class methods here
+  createSpot() {
+    let bodyObj = new THREE.Object3D();
+    {
+      let torsoShape = new THREE.Shape();
+      torsoShape.moveTo(0, 60);
+      torsoShape.bezierCurveTo(0, 60, 4.5, 65, 4.5, 80);
+      torsoShape.lineTo(14.5, 80);
+      torsoShape.bezierCurveTo(14.5, 80, 14.5, 65, 19, 60);
+      torsoShape.lineTo(19, 19.25);
+      torsoShape.bezierCurveTo(19, 19.25, 15.5, 14.25, 15.5, 0);
+      torsoShape.lineTo(3.5, 0);
+      torsoShape.bezierCurveTo(3.5, 0, 3.5, 14.25, 0, 19.25);
+
+      const torsoGeo = new THREE.ExtrudeGeometry(torsoShape, { depth: 16, bevelEnabled: true, bevelThickness: 3, bevelSegments: 10 });
+      let torsoMesh = new THREE.Mesh(torsoGeo, matteBlackMat);
+      torsoMesh.rotation.x = Math.PI * 0.5;
+      torsoMesh.position.x = -19 / 2;
+      torsoMesh.position.z = -8
+      torsoMesh.position.y = 16 / 2;
+
+      bodyObj.add(torsoMesh);
+      this.mesh = bodyObj;
+
+      let liveryTextureRight = textureLoader.load('right.jpg');
+      let liveryTextureLeft = textureLoader.load('left.jpg');
+      let liveryTextureMatRight = new THREE.MeshStandardMaterial({ map: liveryTextureRight });
+      let liveryTextureMatLeft = new THREE.MeshStandardMaterial({ map: liveryTextureLeft });
+      let liveryTextureMaterials = [
+        liveryTextureMatRight,
+        liveryTextureMatLeft,
+        matteYellowMat,
+        matteYellowMat,
+
+        matteYellowMat,
+        matteYellowMat
+      ]
+
+      let torsoLiveryGeo = new THREE.BoxGeometry(25, 23, 50);
+      let torsoLiveryMesh = new THREE.Mesh(torsoLiveryGeo, liveryTextureMaterials);
+      torsoLiveryMesh.position.z = 30
+      bodyObj.add(torsoLiveryMesh);
+
+    }
+
+    { //head and behind
+      const vertices = [
+        // front
+        { pos: [-1, -1, 0], norm: [0, 0, 1], uv: [0, 0], }, // 0
+        { pos: [1, -1, 0], norm: [0, 0, 1], uv: [0.5, 0], }, // 1
+        { pos: [-1, 0.8, 1], norm: [0, 0, 1], uv: [0, 0.5], }, // 2
+        { pos: [1, 0.8, 1], norm: [0, 0, 1], uv: [0.5, 0.5], }, // 3
+
+        // right
+        { pos: [1, -1, 0], norm: [1, 0, 0], uv: [1, 1], }, // 4
+        { pos: [1, -1, -1], norm: [1, 0, 0], uv: [2, 1], }, // 5
+        { pos: [1, 0.8, 1], norm: [1, 0, 0], uv: [1, 2], }, // 6
+        { pos: [1, 1, -1], norm: [1, 0, 0], uv: [2, 2], }, // 7
+
+        // back
+        { pos: [1, -1, -1], norm: [0, 0, -1], uv: [1, 1], }, // 8
+        { pos: [-1, -1, -1], norm: [0, 0, -1], uv: [2, 1], }, // 9
+        { pos: [1, 1, -1], norm: [0, 0, -1], uv: [1, 2], }, // 10
+        { pos: [-1, 0, -1], norm: [0, 0, -1], uv: [2, 2], }, // 11
+
+
+        // left
+        { pos: [-1, -1, -1], norm: [-1, 0, 0], uv: [1, 1], }, // 12
+        { pos: [-1, -1, 0], norm: [-1, 0, 0], uv: [2, 1], }, // 13
+        { pos: [-1, 1, -1], norm: [-1, 0, 0], uv: [1, 2], }, // 14
+        { pos: [-1, 0.8, 1], norm: [-1, 0, 0], uv: [2, 2], }, // 15
+
+
+        // top
+        { pos: [1, 1, -1], norm: [0, 1, 0], uv: [1, 1], }, // 16
+        { pos: [-1, 1, -1], norm: [0, 1, 0], uv: [2, 1], }, // 17
+        { pos: [1, 0.8, 1], norm: [0, 1, 0], uv: [1, 2], }, // 18
+        { pos: [-1, 0.8, 1], norm: [0, 1, 0], uv: [2, 2], }, // 19
+        // bottom
+        { pos: [1, -1, 0], norm: [0, -1, 0], uv: [1, 1], }, // 20
+        { pos: [-1, -1, 0], norm: [0, -1, 0], uv: [2, 1], }, // 21
+        { pos: [1, -1, -1], norm: [0, -1, 0], uv: [1, 2], }, // 22
+        { pos: [-1, -1, -1], norm: [0, -1, 0], uv: [2, 2], }, // 23
+      ];
+
+      const numVertices = vertices.length;
+      const positionNumComponents = 3;
+      const normalNumComponents = 3;
+      const uvNumComponents = 2;
+      const positions = new Float32Array(numVertices * positionNumComponents);
+      const normals = new Float32Array(numVertices * normalNumComponents);
+      const uvs = new Float32Array(numVertices * uvNumComponents);
+      let posNdx = 0;
+      let nrmNdx = 0;
+      let uvNdx = 0;
+      for (const vertex of vertices) {
+        positions.set(vertex.pos, posNdx);
+        normals.set(vertex.norm, nrmNdx);
+        uvs.set(vertex.uv, uvNdx);
+        posNdx += positionNumComponents;
+        nrmNdx += normalNumComponents;
+        uvNdx += uvNumComponents;
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, positionNumComponents));
+      geometry.setAttribute(
+        'normal',
+        new THREE.BufferAttribute(normals, normalNumComponents));
+      geometry.setAttribute(
+        'uv',
+        new THREE.BufferAttribute(uvs, uvNumComponents));
+
+      geometry.setIndex([
+        0, 1, 2, 2, 1, 3,  // front
+        4, 5, 6, 6, 5, 7,  // right
+        8, 9, 10, 10, 9, 11,  // back
+        12, 13, 14, 14, 13, 15,  // left
+        16, 17, 18, 18, 17, 19,  // top
+        20, 21, 22, 22, 21, 23,  // bottom
+      ]);
+
+      const frontFaceTexture = textureLoader.load('front_face.png');
+
+      const frontFaceMaterial = new THREE.MeshStandardMaterial({ map: frontFaceTexture });
+
+
+
+      const headLivery = new THREE.Mesh(geometry, frontFaceMaterial);
+      headLivery.scale.set(10, 12, 10)
+      this.mesh.add(headLivery);
+
+      headLivery.rotation.y = (MathUtils.degToRad(180));
+      headLivery.position.z = -10
+
+      const back_texture = textureLoader.load('back_face.png');
+      const backFaceMaterial = new THREE.MeshStandardMaterial({ map: back_texture });
+
+      const hindLivery = new THREE.Mesh(geometry, backFaceMaterial);
+      hindLivery.scale.set(10, 12, 10)
+      this.mesh.add(hindLivery);
+
+      hindLivery.position.z = 75
+
+    }
+
+    this.mesh.add(this.legs.legsMesh);
+    this.mesh.add(this.arm.baseJoint);
+    this.arm.baseJoint.position.y = 16;
+
+    return bodyObj;
+  }
+}
+// Class for spot's arm and its movement methods
 class Arm {
   constructor() {
     this.baseJoint = new THREE.Object3D();
@@ -195,6 +374,7 @@ class Arm {
   }
 }
 
+// Parent class for spot's legs and their movement methods
 class Legs {
   constructor() {
     this.legsMesh = new THREE.Object3D();
@@ -210,7 +390,7 @@ class Legs {
 
   init() {
 
-    // change position legs 
+    // change position legs
     this.rightFrontLeg.leg.position.x = 10;
     this.rightFrontLeg.leg.position.z = -2;
 
@@ -238,8 +418,8 @@ class Legs {
     this.leftBackLeg.knee.rotation.y = MathUtils.degToRad(180);
     this.leftFrontLeg.knee.rotation.y = MathUtils.degToRad(180);
 
-    this.extendAllLegs(-75);
-    this.extendAllKnees(-110);
+    this.extendAllLegs(-50);
+    this.extendAllKnees(-90);
     // this.abductAllLegs(30);
 
 
@@ -332,6 +512,7 @@ class Legs {
 
 }
 
+// Class for individual legs for spot
 class Leg {
   constructor() {
     this.leg = new THREE.Object3D();
@@ -466,183 +647,9 @@ class Leg {
   }
 }
 
-class Spot {
-  constructor() {
-
-    if (Spot.instance) {
-      return Spot.instance;
-    }
-    Spot.instance = this;
-
-    this.legs = new Legs();
-    this.arm = new Arm();
-
-    this.mesh = this.createSpot();
-
-    // this.animate()
-  }
-
-
-  // Spot class methods here
-  createSpot() {
-    let bodyObj = new THREE.Object3D();
-    {
-      let torsoShape = new THREE.Shape();
-      torsoShape.moveTo(0, 60);
-      torsoShape.bezierCurveTo(0, 60, 4.5, 65, 4.5, 80);
-      torsoShape.lineTo(14.5, 80);
-      torsoShape.bezierCurveTo(14.5, 80, 14.5, 65, 19, 60);
-      torsoShape.lineTo(19, 19.25);
-      torsoShape.bezierCurveTo(19, 19.25, 15.5, 14.25, 15.5, 0);
-      torsoShape.lineTo(3.5, 0);
-      torsoShape.bezierCurveTo(3.5, 0, 3.5, 14.25, 0, 19.25);
-
-      const torsoGeo = new THREE.ExtrudeGeometry(torsoShape, { depth: 16, bevelEnabled: true, bevelThickness: 3, bevelSegments: 10 });
-      let torsoMesh = new THREE.Mesh(torsoGeo, matteYellowMat);
-      torsoMesh.rotation.x = Math.PI * 0.5;
-      torsoMesh.position.x = -19 / 2;
-      torsoMesh.position.z = -8
-      torsoMesh.position.y = 16 / 2;
-
-      bodyObj.add(torsoMesh);
-      this.mesh = bodyObj;
-
-      // console.log(typeof this.legs);
-    }
-
-    { //head and behind
-      const vertices = [
-        // front
-        { pos: [-1, -1, 0], norm: [0, 0, 1], uv: [0, 0], }, // 0
-        { pos: [1, -1, 0], norm: [0, 0, 1], uv: [1, 0], }, // 1
-        { pos: [-1, 0.8, 1], norm: [0, 0, 1], uv: [0, 1], }, // 2
-        { pos: [1, 0.8, 1], norm: [0, 0, 1], uv: [1, 1], }, // 3
-
-        // right
-        { pos: [1, -1, 0.5], norm: [1, 0, 0], uv: [0, 0], }, // 4
-        { pos: [1, -1, -1], norm: [1, 0, 0], uv: [1, 0], }, // 5
-        { pos: [1, 0.8, 1], norm: [1, 0, 0], uv: [0, 1], }, // 6
-        { pos: [1, 1, -1], norm: [1, 0, 0], uv: [1, 1], }, // 7
-
-        // back
-        { pos: [1, -1, -1], norm: [0, 0, -1], uv: [0, 0], }, // 8
-        { pos: [-1, -1, -1], norm: [0, 0, -1], uv: [1, 0], }, // 9
-        { pos: [1, 1, -1], norm: [0, 0, -1], uv: [0, 1], }, // 10
-        { pos: [-1, 0, -1], norm: [0, 0, -1], uv: [1, 1], }, // 11
-
-
-        // left
-        { pos: [-1, -1, -1], norm: [-1, 0, 0], uv: [0, 0], }, // 12
-        { pos: [-1, -1, 0.5], norm: [-1, 0, 0], uv: [1, 0], }, // 13
-        { pos: [-1, 1, -1], norm: [-1, 0, 0], uv: [0, 1], }, // 14
-        { pos: [-1, 0.8, 1], norm: [-1, 0, 0], uv: [1, 1], }, // 15
-
-
-        // top
-        { pos: [1, 1, -1], norm: [0, 1, 0], uv: [0, 0], }, // 16
-        { pos: [-1, 1, -1], norm: [0, 1, 0], uv: [1, 0], }, // 17
-        { pos: [1, 0.8, 1], norm: [0, 1, 0], uv: [0, 1], }, // 18
-        { pos: [-1, 0.8, 1], norm: [0, 1, 0], uv: [1, 1], }, // 19
-        // bottom
-        { pos: [1, -1, 0.5], norm: [0, -1, 0], uv: [0, 0], }, // 20
-        { pos: [-1, -1, 0.5], norm: [0, -1, 0], uv: [1, 0], }, // 21
-        { pos: [1, -1, -1], norm: [0, -1, 0], uv: [0, 1], }, // 22
-        { pos: [-1, -1, -1], norm: [0, -1, 0], uv: [1, 1], }, // 23
-      ];
-
-      const numVertices = vertices.length;
-      const positionNumComponents = 3;
-      const normalNumComponents = 3;
-      const uvNumComponents = 2;
-      const positions = new Float32Array(numVertices * positionNumComponents);
-      const normals = new Float32Array(numVertices * normalNumComponents);
-      const uvs = new Float32Array(numVertices * uvNumComponents);
-      let posNdx = 0;
-      let nrmNdx = 0;
-      let uvNdx = 0;
-      for (const vertex of vertices) {
-        positions.set(vertex.pos, posNdx);
-        normals.set(vertex.norm, nrmNdx);
-        uvs.set(vertex.uv, uvNdx);
-        posNdx += positionNumComponents;
-        nrmNdx += normalNumComponents;
-        uvNdx += uvNumComponents;
-      }
-
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute(
-        'position',
-        new THREE.BufferAttribute(positions, positionNumComponents));
-      geometry.setAttribute(
-        'normal',
-        new THREE.BufferAttribute(normals, normalNumComponents));
-      geometry.setAttribute(
-        'uv',
-        new THREE.BufferAttribute(uvs, uvNumComponents));
-
-      geometry.setIndex([
-        0, 1, 2, 2, 1, 3,  // front
-        4, 5, 6, 6, 5, 7,  // right
-        8, 9, 10, 10, 9, 11,  // back
-        12, 13, 14, 14, 13, 15,  // left
-        16, 17, 18, 18, 17, 19,  // top
-        20, 21, 22, 22, 21, 23,  // bottom
-      ]);
-
-      const headLivery = new THREE.Mesh(geometry, matteYellowMat);
-      headLivery.scale.set(10, 12, 10)
-      this.mesh.add(headLivery);
-
-      headLivery.rotation.y = (MathUtils.degToRad(180));
-      headLivery.position.z = -10
-
-      const hindLivery = new THREE.Mesh(geometry, matteYellowMat);
-      hindLivery.scale.set(10, 12, 10)
-      this.mesh.add(hindLivery);
-
-      hindLivery.position.z = 75
-
-    }
-
-    this.mesh.add(this.legs.legsMesh);
-    this.mesh.add(this.arm.baseJoint);
-    this.arm.baseJoint.position.y = 16;
-
-    return bodyObj;
-  }
-}
-
-
-function main() {
-  const canvas = document.querySelector('#c');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.xr.enabled = true;
-  document.body.appendChild(VRButton.createButton(renderer));
-
-  const fov = 75;
-  const aspect = 2;  // the canvas default
-  const near = 0.1;
-  const far = 3000;
-  const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera.position.set(1000, 0, 50);
-  camera.lookAt(0, 0, 0);
-
-  var controls = new FlyControls(camera, renderer.domElement);
-  controls.dragToLook = true;
-  // controls.listenToKeyEvents(window); // optional
-
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x333333);
-
-  material = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
-  matteBlackMat = new THREE.MeshPhongMaterial({ color: 0x222222, side: THREE.DoubleSide });
-  matteYellowMat = new THREE.MeshStandardMaterial({ color: 0xFFFF00, side: THREE.DoubleSide });
-
-
-  var axesHelper = new THREE.AxesHelper(100);
-  scene.add(axesHelper);
-
-  const gui = new GUI();
+// Add Gui Controls to scene
+function addGuiControls() {
+  gui = new GUI();
   let armKeyFrames = {
     'rotateBase': 3,
     'extendLowerArm': 30,
@@ -739,41 +746,47 @@ function main() {
   jointControls.close()
   gui.close()
 
-  // gui.add(rotationKeyframe, 'extendLowerArm', 0, 100, 10); // min, max, step
 
+}
 
-  {
-    // Create polyhedron
-    const verticesOfCube = [
-      - 0.8, - 1, -0.2, // 0
-      0.8, - 1, -0.2, // 1
-      1, 1, - 1, // 2
-      - 1, 1, - 1, // 3
-      - 1, - 1, 1, // 4
-      1, - 1, 1, // 5
-      1, 1, 1, // 6
-      - 1, 1, 1, // 7
-    ];
-    const indicesOfFaces = [
-      2, 1, 0, 0, 3, 2,
-      // 0, 4, 7, 7, 3, 0,
-      // 0, 1, 5, 5, 4, 0,
-      // 1, 2, 6, 6, 5, 1,
-      // 2, 3, 7, 7, 6, 2,
-      // 4, 5, 6, 6, 7, 4,
-    ];
+function main() {
+  const canvas = document.querySelector('#c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.xr.enabled = true;
+  document.body.appendChild(VRButton.createButton(renderer));
 
-    const polyGeo = new THREE.PolyhedronGeometry(verticesOfCube, indicesOfFaces, 22);
-    let mesh = new THREE.Mesh(polyGeo, matteYellowMat);
-    // mesh.scale.z = 2;
-    // mesh.position.z = 50;
+  // --------
+  // Camera and Scene Setup
+  // --------
+  const fov = 75;
+  const aspect = 2;  // the canvas default
+  const near = 0.1;
+  const far = 3000;
+  const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+  // camera.position.set(1000, 0, 50);
+  camera.position.set(10, 1.6, -10);
+  camera.lookAt(0, 1, 0);
 
-    // bodyObj.add(mesh);
-  }
+  var controls = new FlyControls(camera, renderer.domElement);
+  controls.dragToLook = true;
 
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x333333);
 
+  textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load('yellow.png');
+  matteYellowMat = new THREE.MeshPhongMaterial({ map: texture });
+  matteBlackMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+  debugMaterial = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
 
+  var axesHelper = new THREE.AxesHelper(100);
+  scene.add(axesHelper);
 
+  addGuiControls();
+
+  // ----------
+  // LIGHTING
+  // ---------
   {
     const color = 0xFFFFFF;
     const intensity = 1;
@@ -786,8 +799,127 @@ function main() {
     scene.add(light2);
   }
 
+  // Add Grid Helper
+  const gridHelper = new THREE.GridHelper(200, 200);
+  scene.add(gridHelper);
+
+  // Spawn Spot
   let spot = new Spot();
+  let spotInitPos = new THREE.Vector3(0, 1.4, 0);
+  spot.mesh.position.set(spotInitPos.x, spotInitPos.y, spotInitPos.z);
+  spot.mesh.scale.set(0.02, 0.02, 0.02);
   scene.add(spot.mesh);
+
+
+  // ---------
+  // ANIMATION 
+  // ---------
+  let animationParams = {
+    "walkAnimationFlag": false,
+    "runAnimationFlag": false,
+    "armAnimationFlag": false,
+    "flyAwayAnimationFlag": false,
+    "followSpot": true,
+    "animateWithMovement": true,
+  }
+
+  const folderAnimation = gui.addFolder('Animations', 0);
+  for (const key in animationParams) {
+    if (animationParams.hasOwnProperty(key)) {
+      folderAnimation.add(animationParams, key).onChange(value => {
+        spot.mesh.position.set(spotInitPos.x, spotInitPos.y, spotInitPos.z);
+      });
+    }
+  }
+  // Assuming `mesh` is your THREE.Mesh object
+  let frame = 0;
+  function animate() {
+
+    frame++;
+    requestAnimationFrame(animate);
+
+    if (animationParams.walkAnimationFlag)
+      animateWalk(frame)
+    if (animationParams.runAnimationFlag)
+      animateRun(frame)
+    if (animationParams.armAnimationFlag)
+      animateArm(frame)
+    if (animationParams.flyAwayAnimationFlag)
+      flyAway(frame)
+
+    renderer.render(scene, camera);
+
+    function animateWalk(frame) {
+
+      if (animationParams.animateWithMovement) {
+        spot.mesh.position.z -= 0.02;
+        if (spot.mesh.position.z < -100) {
+          spot.mesh.position.z = 100;
+        }
+        spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 15) / 20
+      }
+
+      if (animationParams.followSpot)
+        camera.lookAt(spot.mesh.position)
+
+      spot.legs.extendLeftStepKnees(290 + Math.sin(frame / 30) * 40);
+      spot.legs.extendLeftStepLegs(300 + Math.cos(frame / 30) * 10);
+
+      spot.legs.extendRightStepKnees(290 + Math.cos(frame / 30) * 40);
+      spot.legs.extendRightStepLegs(300 + Math.sin(frame / 30) * 10);
+    }
+
+    function animateRun(frame) {
+
+      if (animationParams.animateWithMovement) {
+        spot.mesh.position.z -= 0.1;
+        if (spot.mesh.position.z < -100) {
+          spot.mesh.position.z = 100;
+        }
+        spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 20) * 2 / 20
+      }
+
+      if (animationParams.followSpot)
+        camera.lookAt(spot.mesh.position)
+
+      spot.legs.extendAllBackKnees(300 + Math.sin(frame / 20) * 50);
+      spot.legs.extendAllBackLegs(300 + Math.cos(frame / 20) * 20);
+
+      spot.legs.extendAllFrontKnees(-325 + Math.cos(frame / 20) * 50);
+      spot.legs.extendAllFrontLegs(-325 + Math.sin(frame / 20) * 20);
+    }
+
+    function animateArm(frame) {
+      spot.arm.baseJoint.rotation.y = 6 + Math.sin(frame / 200);
+      spot.arm.lowerArm.rotation.x = -150 + Math.sin(frame / 200) * 0.5;
+      spot.arm.elbow.rotation.x = -150 + Math.sin(frame / 100) * 0.5;
+      spot.arm.forearmTwistJoint.rotation.y = Math.sin(frame / 100);
+      spot.arm.wristTwistJoint.rotation.y = Math.sin(frame / 50);
+      spot.arm.wristTwistJoint.rotation.x = Math.sin(frame / 100);
+      spot.arm.claw.rotation.x = -150 - Math.sin(frame / 30);
+    }
+
+    function flyAway(frame) {
+
+      if (animationParams.animateWithMovement) {
+        spot.mesh.position.z -= 0.1;
+        spot.mesh.position.y += (0.5 + Math.cos(frame / 20) + Math.sin(frame / 100)) / 20;
+      }
+      if (spot.mesh.position.z < -100) {
+        spot.mesh.position.z = 100;
+        spot.mesh.position.y = 5;
+      }
+
+      if (animationParams.followSpot)
+        camera.lookAt(spot.mesh.position)
+
+      spot.legs.abductAllLegs(45);
+      spot.legs.extendAllKnees(210 + Math.cos(frame / 50));
+
+      spot.arm.elbow.rotation.x = (90);
+      spot.arm.rotateBase(frame * 100);
+    }
+  }
 
   function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
@@ -811,135 +943,16 @@ function main() {
 
     controls.update(0.5); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
-    // spot.arm.rotateBase(rotationKeyframe.rotateBase);
     renderer.render(scene, camera);
     renderer.setAnimationLoop(render);
-    // requestAnimationFrame(render);
-
-    // spot.arm.baseJoint.rotation.s(new THREE.Vector3(10, 0, 0));
-    // spot.mesh.position.lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(100, 0, 0), 0.1);
-
   }
 
-  let animationParams = {
-    "walkAnimationFlag": true,
-    "runAnimationFlag": false,
-    "armAnimationFlag": false,
-    "flyAwayAnimationFlag": false,
-    "followSpot": true,
-    "animateWithMovement": true,
-  }
-
-  const folderAnimation = gui.addFolder('Animations', 0);
-  for (const key in animationParams) {
-    if (animationParams.hasOwnProperty(key)) {
-      folderAnimation.add(animationParams, key).onChange(value => {
-        spot.mesh.position.set(0, 0, 0)
-      });
-    }
-  }
-  // Assuming `mesh` is your THREE.Mesh object
-  let frame = 0;
-  function animate() {
-
-    frame++;
-    requestAnimationFrame(animate);
-
-    if (animationParams.walkAnimationFlag)
-      animateWalk(frame)
-    if (animationParams.runAnimationFlag)
-      animateRun(frame)
-    if (animationParams.armAnimationFlag)
-      animateArm(frame)
-    if (animationParams.flyAwayAnimationFlag)
-      flyAway(frame)
-
-    renderer.render(scene, camera);
-    console.log(animationParams.walkAnimationFlag)
-  }
   animate();
-
-
-  function animateWalk(frame) {
-
-    if (animationParams.animateWithMovement) {
-      spot.mesh.position.z -= 0.3;
-      if (spot.mesh.position.z < -1000) {
-        spot.mesh.position.z = 1000;
-      }
-      spot.mesh.position.y = Math.cos(frame / 15) * 2
-    }
-
-
-    if (animationParams.followSpot)
-      camera.lookAt(spot.mesh.position)
-
-    spot.legs.extendLeftStepKnees(300 + Math.sin(frame / 30) * 30);
-    spot.legs.extendLeftStepLegs(300 + Math.cos(frame / 30) * 10);
-
-    spot.legs.extendRightStepKnees(300 + Math.cos(frame / 30) * 30);
-    spot.legs.extendRightStepLegs(300 + Math.sin(frame / 30) * 10);
-  }
-
-  function animateRun(frame) {
-
-    if (animationParams.animateWithMovement) {
-      spot.mesh.position.z -= 3;
-      if (spot.mesh.position.z < -1000) {
-        spot.mesh.position.z = 1000;
-      }
-      spot.mesh.position.y = Math.cos(frame / 20) * 15
-    }
-
-    if (animationParams.followSpot)
-      camera.lookAt(spot.mesh.position)
-
-    spot.legs.extendAllBackKnees(300 + Math.sin(frame / 20) * 50);
-    spot.legs.extendAllBackLegs(300 + Math.cos(frame / 20) * 20);
-
-    spot.legs.extendAllFrontKnees(-325 + Math.cos(frame / 20) * 50);
-    spot.legs.extendAllFrontLegs(-325 + Math.sin(frame / 20) * 20);
-  }
-
-
-
-  function animateArm(frame) {
-    spot.arm.baseJoint.rotation.y = 6 + Math.sin(frame / 200);
-    spot.arm.lowerArm.rotation.x = -150 + Math.sin(frame / 200) * 0.5;
-    spot.arm.elbow.rotation.x = -150 + Math.sin(frame / 100) * 0.5;
-    spot.arm.forearmTwistJoint.rotation.y = Math.sin(frame / 100);
-    spot.arm.wristTwistJoint.rotation.y = Math.sin(frame / 50);
-    spot.arm.wristTwistJoint.rotation.x = Math.sin(frame / 100);
-    spot.arm.claw.rotation.x = -150 - Math.sin(frame / 30);
-  }
-
-  // spot.legs.extendAllLegs(0);
-
-  function flyAway(frame) {
-
-    if (animationParams.animateWithMovement) {
-      spot.mesh.position.z -= 1;
-      spot.mesh.position.y += 0.5 + Math.cos(frame / 20) + Math.sin(frame / 100);
-    }
-    if (spot.mesh.position.z < -1000) {
-      spot.mesh.position.z = 1000;
-      spot.mesh.position.y = -1000;
-    }
-
-
-    if (animationParams.followSpot)
-      camera.lookAt(spot.mesh.position)
-
-
-    spot.legs.abductAllLegs(45);
-    spot.legs.extendAllKnees(210 + Math.cos(frame / 50));
-
-    spot.arm.rotateBase(frame * 100);
-    spot.arm.elbow.rotation.x = (90)
-  }
-
   renderer.setAnimationLoop(render);
   // requestAnimationFrame(render);
 }
+
+
+
 
 main();

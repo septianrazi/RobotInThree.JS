@@ -42,7 +42,7 @@ function init() {
     1,
     2000
   );
-  orthCam.position.set(1000, 1000, 100);
+  orthCam.position.set(200, 200, 200);
   orthCam.lookAt(200, 200, 0);
 
   // controls
