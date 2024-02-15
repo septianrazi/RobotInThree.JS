@@ -769,6 +769,7 @@ function main() {
 
   var controls = new FlyControls(camera, renderer.domElement);
   controls.dragToLook = true;
+  controls.movementSpeed = 0.1;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x333333);
