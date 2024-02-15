@@ -837,7 +837,7 @@ function main() {
   function animate() {
 
     frame++;
-    requestAnimationFrame(animate);
+    // requestAnimationFrame(animate);
 
     if (animationParams.walkAnimationFlag)
       animateWalk(frame)
@@ -933,9 +933,8 @@ function main() {
     return needResize;
   }
 
-  function render(time) {
-    //   time *= 0.0004;
 
+  function render() {
     if (resizeRendererToDisplaySize(renderer)) {
       const canvas = renderer.domElement;
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
@@ -944,12 +943,15 @@ function main() {
 
     controls.update(0.5); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
+    animate();
     renderer.render(scene, camera);
     renderer.setAnimationLoop(render);
   }
 
-  animate();
+
   renderer.setAnimationLoop(render);
+  // animate();
+  // renderer.setAnimationLoop(animate);
   // requestAnimationFrame(render);
 }
 
