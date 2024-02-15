@@ -853,11 +853,11 @@ function main() {
     function animateWalk(frame) {
 
       if (animationParams.animateWithMovement) {
-        spot.mesh.position.z -= 0.02;
-        if (spot.mesh.position.z < -50) {
-          spot.mesh.position.z = 50;
+        spot.mesh.position.z -= 0.01;
+        if (spot.mesh.position.z < -25) {
+          spot.mesh.position.z = 25;
         }
-        spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 15) / 20
+        spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 15) / 40
       }
 
       if (animationParams.followSpot)
@@ -873,11 +873,11 @@ function main() {
     function animateRun(frame) {
 
       if (animationParams.animateWithMovement) {
-        spot.mesh.position.z -= 0.1;
-        if (spot.mesh.position.z < -50) {
-          spot.mesh.position.z = 50;
+        spot.mesh.position.z -= 0.05;
+        if (spot.mesh.position.z < -25) {
+          spot.mesh.position.z = 25;
         }
-        spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 20) * 2 / 20
+        spot.mesh.position.y = spotInitPos.y + 0.1 + Math.cos(frame / 20) * 2 / 40
       }
 
       if (animationParams.followSpot)
