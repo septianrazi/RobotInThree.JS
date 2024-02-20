@@ -27,11 +27,12 @@ This includes an implementation of spot the robot. The robot will be able to mov
 
 To have the camera follow spot automatically, make sure you tick followSpot. If you would like to see the animation without having spot physically move from the origin, make sure to untick animateWithMovement.
 
-This implementation also includes a way to view it using VR. You can access the VR scene here:
+This implementation also includes a way to view it using VR. You can access the VR scene here: [https://septianrazi.github.io/RobotInThree.JS/](https://septianrazi.github.io/RobotInThree.JS/)
 
 #### ex4 for MR
 This is the same file as ex4, but for a mixed reality or augmented reality capable device.
 
+The implementation can be seen here: [https://septianrazi.github.io/RobotInThree.JS/ex4_MR.html](https://septianrazi.github.io/RobotInThree.JS/ex4_MR.html)
 
 
 ## Things to Note
