@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { MathUtils } from 'three';
@@ -779,8 +778,8 @@ function main() {
   matteBlackMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
   debugMaterial = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
 
-  var axesHelper = new THREE.AxesHelper(100);
-  scene.add(axesHelper);
+  // var axesHelper = new THREE.AxesHelper(100);
+  // scene.add(axesHelper);
 
   addGuiControls();
 
