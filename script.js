@@ -42,20 +42,13 @@ function init() {
     1,
     2000
   );
-  orthCam.position.set(200, 200, 200);
-  orthCam.lookAt(200, 200, 0);
-
-  // controls
-  // controls = new FlyControls(perspCam, renderer.domElement);
-  // controls.dragToLook = true;
+  orthCam.position.set(100, 100, 100);
+  orthCam.lookAt(0, 0, 0);
 
   controls2 = new FlyControls(orthCam, renderer.domElement);
   controls2.dragToLook = true;
 
   controls = new OrbitControls(perspCam, view1Elem);
-  // controls2 = new OrbitControls(orthCam, view2Elem);
-  // controls.listenToKeyEvents(window); // optional
-  // controls2.update();
 
   controls.enableDamping = false; // an animation loop is required when either damping or auto-rotation are enabled
   controls.dampingFactor = 0.05;
@@ -310,8 +303,6 @@ function init() {
     2, 3, 7, 7, 6, 2,
     4, 5, 6, 6, 7, 4,
   ];
-
-
 
   const polyGeo = new THREE.PolyhedronGeometry(verticesOfCube, indicesOfFaces, width);
   geometries[0].push(polyGeo);

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
-import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { MathUtils } from 'three';
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
 
@@ -752,7 +752,7 @@ function main() {
   const canvas = document.querySelector('#c');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.xr.enabled = true;
-  document.body.appendChild(VRButton.createButton(renderer));
+  document.body.appendChild(ARButton.createButton(renderer));
 
   // --------
   // Camera and Scene Setup
@@ -771,7 +771,7 @@ function main() {
   controls.movementSpeed = 0.1;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x333333);
+  scene.background = null;
 
   textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load('textures/yellow.png');
@@ -800,8 +800,8 @@ function main() {
   }
 
   // Add Grid Helper
-  const gridHelper = new THREE.GridHelper(200, 200);
-  scene.add(gridHelper);
+  // const gridHelper = new THREE.GridHelper(200, 200);
+  // scene.add(gridHelper);
 
   // Spawn Spot
   spot = new Spot();
